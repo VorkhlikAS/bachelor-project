@@ -1,0 +1,39 @@
+version: '3'
+services:
+  flask-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"   # Проброс порта 5000 контейнера на порт 5000 хоста
+    volumes:
+      - model-volume:/app/models
+      - image-volume:/app/static/images
+      - output-volume:/app/data_output
+    depends_on:
+      - db
+    networks:
+      - my-network
+
+  db:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/bak_plain.sql:/docker-entrypoint-initdb.d/bak_plain.sql
+    networks:
+      - my-network
+
+networks:
+  my-network:
+
+volumes:
+  db-data:
+  model-volume:
+  image-volume:
+  output-volume:
+
+# options:
+#       --rm: true

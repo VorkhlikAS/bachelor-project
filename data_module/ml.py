@@ -76,7 +76,7 @@ def predict(run_id):
 def train(run_id, model_type):
     print(f'DEBUG: training {run_id}')
     df = db.get_user_data(run_id)
-    df = pd.DataFrame(df, dtype='int32')
+    df = pd.DataFrame(df)
 
     Y = df.loc[:, 41]
     X = df.loc[:, 1:40]
@@ -88,14 +88,20 @@ def train(run_id, model_type):
     X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=test_size, random_state=seed)
     # # Fit the model on training set
     model = MODELS[model_type]
-    model.fit(X_train, Y_train)
-    # # save the model to disk
+    try:
+        model.fit(X_train, Y_train)
+    except Exception as e:
+        return str('Загруженные данные не подходят для обучения!')
+    
+    # save the model to disk
     filename = f'model_{run_id}.sav'
     model_path = os.path.join(get_root_path(), "models")
     pickle.dump(model, open(os.path.join(model_path, filename), 'wb'))
     result = model.score(X_test, Y_test)
     print(f'DEBUG: score: {result}')
     print(f'DEBUG: saving {filename}')
+
+    return 'success'
 
 
 # if __name__ == "__main__":

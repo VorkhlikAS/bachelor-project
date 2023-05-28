@@ -1,0 +1,15 @@
+version: '3'
+services:
+  db:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./bak_plain.sql:/docker-entrypoint-initdb.d/bak_plain.sql
+
+volumes:
+  postgres-data:

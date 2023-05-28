@@ -108,9 +108,10 @@ def get_connection():
     try:
         dbname, user, password, host = get_params("dbname", "user", "password", "host")
         conn = psycopg2.connect(dbname=dbname, user=user, password=password, host=host)
+        print(f'DEBUG: {conn}')
         return conn
     except Exception as e:
-        print(e)
+        print(f'ERROR: {e}')
         return f"Database not responding... {e}"
 
 
