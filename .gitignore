@@ -1,2 +1,4 @@
 settings.yaml
 .settings.yaml
+__pycache__/
+*.pyc
