@@ -34,6 +34,3 @@ volumes:
   model-volume:
   image-volume:
   output-volume:
-
-# options:
-#       --rm: true

@@ -74,48 +74,53 @@ ALL_COLS = [
 
 
 def get_user_data(user_id: str, api: vk.session.API):
-    """Retrieve VK API data for a given user ID and fields"""
-    fields = get_params("fields")
+    """
+    Возвращает данные пользователя по его ID
+    """
+    fields = get_params("fields")  # Получаем список полей из конфигурации
     try:
-        result = api.users.get(user_ids=user_id, fields=fields[0])
-        sleep(0.5)
+        result = api.users.get(user_ids=user_id, fields=fields[0])  # Запрашиваем данные пользователя по его ID и полям
+        sleep(0.5)  # Пауза для соблюдения ограничений VK API
         return result
     except vk.exceptions.VkAPIError as e:
-        print(f"VK API error occurred: {e}")
+        print(f"VK API error occurred: {e}")  # Выводим сообщение об ошибке VK API
         return None
 
  
 def get_users_by_file(filename: str, test: int = 0):
-    token, version = get_params("token", "version")
-    api = get_api(token=token, version=version)
-    data = get_data(filename)
-    api_result = []
+    """
+    Возвращает данные о пользователях указанных в файле
+    """
+    token, version = get_params("token", "version")  # Получаем токен и версию API из конфигурации
+    api = get_api(token=token, version=version)  # Получаем экземпляр API
+    data = get_data(filename)  # Получаем данные о пользователях из файла
+    api_result = []  # Результаты запросов к VK API
 
     for user in data:
         if test != 1:
-            api_result.append([get_user_data(user[0], api), user[1]])
+            api_result.append([get_user_data(user[0], api), user[1]])  # Запрашиваем данные пользователя и добавляем их в api_result
         else:
-            api_result.append([get_user_data(user[0], api), ''])
+            api_result.append([get_user_data(user[0], api), ''])  # Запрашиваем данные пользователя и добавляем их в api_result
 
-    final = []
+    final = []  # Итоговый результат
 
     for user in api_result:
-        temp = []
+        temp = []  # Временное хранилище для данных пользователя
         print(f'DEBUG: items: {user[0][0].items()}')
         print(f'DEBUG: isbot = {user[1]}')
         long_id = user[0][0]['id']
         print(f'DEBUG: long id = {long_id}')
-        closed = False
+        closed = False  # Флаг, указывающий на закрытый профиль пользователя
         for i, col in enumerate(ALL_COLS):
-            if col in user[0][0]:
-                if test != 1 and col == 'is_closed' and user[0][0][col] == 'True':
+            if col in user[0][0]:  # Проверяем наличие поля в данных пользователя
+                if test != 1 and col == 'is_closed' and user[0][0][col] == 'True':  # Проверяем, является ли профиль закрытым
                     closed = True
                     break
-                print(i, col, user[0][0][col])
-                temp.append(str(user[0][0][col]))
+                print(i, col, user[0][0][col])  # Выводим информацию о поле пользователя
+                temp.append(str(user[0][0][col]))  # Добавляем значение поля во временное хранилище
             else:
-                print(f'{i} Missing: {col}')
-                temp.append('')
+                print(f'{i} Missing: {col}')  # Выводим сообщение о пропущенном поле
+                temp.append('')  # Добавляем пустое значение во временное хранилище
 
         if closed:
             sleep(0.5)
@@ -124,81 +129,56 @@ def get_users_by_file(filename: str, test: int = 0):
         temp.append(user[1])  # is_bot
 
         try:
-            fol = api.users.getFollowers(user_id=long_id)
-            temp.append(fol['count'])
+            fol = api.users.getFollowers(user_id=long_id)  # Получаем информацию о подписчиках пользователя
+            temp.append(fol['count'])  # Добавляем количество подписчиков во временное хранилище
         except Exception as e:
             temp.append('')
+
         sleep(0.5)
 
         try:
-            frn = api.friends.get(user_ids=long_id)
-            temp.append(frn['count'])
+            frn = api.friends.get(user_ids=long_id)  # Получаем информацию о друзьях пользователя
+            temp.append(frn['count'])  # Добавляем количество друзей во временное хранилище
         except Exception as e:
             temp.append('')
+
         sleep(0.5)
 
         try:
-            wll = api.wall.get(owner_id=long_id)
-            temp.append(wll['count'])
+            wll = api.wall.get(owner_id=long_id)  # Получаем информацию о стенах пользователя
+            temp.append(wll['count'])  # Добавляем количество записей на стене во временное хранилище
         except Exception as e:
             temp.append('')
+
         sleep(0.5)
 
         ph_cnt = 0
         try:
-            wll_ph = api.photos.get(owner_id=long_id, album_id='wall')
-            ph_cnt += int(wll_ph['count'])
+            wll_ph = api.photos.get(owner_id=long_id, album_id='wall')  # Получаем информацию о фотографиях на стене пользователя
+            ph_cnt += int(wll_ph['count'])  # Считаем количество фотографий на стене
             sleep(0.5)
-            prf_ph = api.photos.get(owner_id=long_id, album_id='profile')
-            ph_cnt += int(prf_ph['count'])
+            prf_ph = api.photos.get(owner_id=long_id, album_id='profile')  # Получаем информацию о профильных фотографиях пользователя
+            ph_cnt += int(prf_ph['count'])  # Считаем количество профильных фотографий
             sleep(0.5)
-            svd_ph = api.photos.get(owner_id=long_id, album_id='saved')
-            ph_cnt += int(svd_ph['count'])
-            temp.append(str(ph_cnt))
+            svd_ph = api.photos.get(owner_id=long_id, album_id='saved')  # Получаем информацию о сохраненных фотографиях пользователя
+            ph_cnt += int(svd_ph['count'])  # Считаем количество сохраненных фотографий
+            temp.append(str(ph_cnt))  # Добавляем общее количество фотографий во временное хранилище
         except Exception as e:
             if ph_cnt > 0:
                 temp.append(str(ph_cnt))
             else:
                 temp.append('')
+
         sleep(0.5)
         
         try:
-            grp = api.groups.get(user_id=long_id)
-            temp.append(grp['count'])
+            grp = api.groups.get(user_id=long_id)  # Получаем информацию о группах пользователя
+            temp.append(grp['count'])  # Добавляем количество групп во временное хранилище
         except Exception as e:
             temp.append('')
+
         sleep(0.5)
 
-        final.append(temp)
+        final.append(temp)  # Добавляем данные пользователя в итоговый результат
 
-    return final
-
-
-# if __name__ == '__main__':
-#     token, version = get_params("token", "version")
-#     api = get_api(token=token, version=version)
-#     fields = get_params("fields")
-
-
-#     a = api.users.getFollowers(user_id='350924606')
-#     print(a['count'])
-#     print('=======================FOL=========================')
-#     a = api.friends.get(user_ids='danilmakarkin')
-#     print(a['count'])
-#     print('=======================FRN=========================')
-#     a = api.wall.get(owner_id='350924606')
-#     print(a['count'])
-#     print('=======================WLL=========================')
-#     try:
-#         a = api.photos.get(owner_id='350924606', album_id='wall')
-#         print(a['count'])
-#         a = api.photos.get(owner_id='350924606', album_id='profile')
-#         print(a['count'])
-#         a = api.photos.get(owner_id='350924606', album_id='saved')
-#         print(a['count'])
-#     except Exception as e:
-#         print(e)
-#     print('=======================PHT=========================')
-#     a = api.groups.get(user_id='350924606')
-#     print(a['count'])
-#     print('=======================GRP=========================')
+    return final  # Возвращаем итоговый результат

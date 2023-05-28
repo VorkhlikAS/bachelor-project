@@ -1,103 +1,97 @@
-from data_module.utils import get_root_path
-import data_module.db as db
-import pandas as pd
-from sklearn import model_selection
-from sklearn import svm, tree
-from sklearn.ensemble import RandomForestClassifier
-import pickle
-import os
-from matplotlib import pyplot as plt
-import numpy as np
+from data_module.utils import get_root_path  # Импортируем функцию get_root_path из модуля utils в пакете data_module
+import data_module.db as db  # Импортируем модуль db из пакета data_module и называем его db
+import pandas as pd  # Импортируем модуль pandas и называем его pd
+from sklearn import model_selection  # Импортируем модуль model_selection из пакета sklearn
+from sklearn import svm, tree  # Импортируем классы svm и tree из пакета sklearn
+from sklearn.ensemble import RandomForestClassifier  # Импортируем класс RandomForestClassifier из пакета sklearn.ensemble
+import pickle  # Импортируем модуль pickle для сохранения моделей
+import os  # Импортируем модуль os для работы с файлами
+from matplotlib import pyplot as plt  # Импортируем функцию pyplot из модуля matplotlib и называем его plt
+import numpy as np  # Импортируем модуль numpy и называем его np
 
 
 MODELS = {
-    "svm":svm.SVC(probability=True),
-    "dt":tree.DecisionTreeClassifier(),
-    "rf":RandomForestClassifier(n_estimators=50)
-          }
-
-def get_user_data():
-    pass
+    "svm": svm.SVC(probability=True),  # Создаем объект svm.SVC с аргументом probability=True и добавляем его в словарь MODELS
+    "dt": tree.DecisionTreeClassifier(),  # Создаем объект tree.DecisionTreeClassifier и добавляем его в словарь MODELS
+    "rf": RandomForestClassifier(n_estimators=50)  # Создаем объект RandomForestClassifier с аргументом n_estimators=50 и добавляем его в словарь MODELS
+}
 
 
 def predict(run_id):
     print(f'DEBUG: predicting {run_id}')
-    df = db.get_user_data(run_id)
-    df = pd.DataFrame(df)
+    df = db.get_user_data(run_id)  # Получаем данные пользователя с помощью функции get_user_data из модуля db в пакете data_module
+    df = pd.DataFrame(df)  # Преобразуем полученные данные в объект DataFrame из модуля pandas и называем его df
     
-    X = df.loc[:, 1:40]
+    X = df.loc[:, 1:40]  # Выбираем столбцы с индексами от 1 до 40 из DataFrame df и присваиваем их переменной X
 
     print(X.head())
 
     filename = f'model_{run_id}.sav'
-    # load the model from disk
-    model_path = os.path.join(get_root_path(), "models")
-    filepath = os.path.join(model_path, filename)
-    if os.path.isfile(filepath):
-        loaded_model = pickle.load(open(filepath, 'rb'))
+    model_path = os.path.join(get_root_path(), "models")  # Создаем путь к папке models с помощью функции get_root_path из модуля utils
+    filepath = os.path.join(model_path, filename)  # Создаем полный путь к файлу модели
+    if os.path.isfile(filepath):  # Проверяем, существует ли файл модели по указанному пути
+        loaded_model = pickle.load(open(filepath, 'rb'))  # Загружаем модель из файла
     else:
-        filepath = os.path.join(model_path, 'the_model.sav')
+        filepath = os.path.join(model_path, 'the_model.sav')  # Если файл модели не найден, загружаем резервную модель
         loaded_model = pickle.load(open(filepath, 'rb'))
 
-    y = loaded_model.predict(X)
-    res = pd.DataFrame(y)
+    y = loaded_model.predict(X)  # Прогнозируем значения y с помощью загруженной модели
+    res = pd.DataFrame(y)  # Создаем DataFrame из предсказанных значений
     print(res.head())
-    res = pd.concat([df.loc[:, 0], res], axis=1, keys=['id', 'is_bot'])
+    res = pd.concat([df.loc[:, 0], res], axis=1, keys=['id', 'is_bot'])  # Объединяем DataFrame df с предсказанными значениями res
     print(f'DEBUG: saving {run_id}')
     filename = f'res_{run_id}.csv'
-    data_output_path = os.path.join(get_root_path(), "data_output")
-    res.to_csv(os.path.join(data_output_path, filename), header=False, index=False)
+    data_output_path = os.path.join(get_root_path(), "data_output")  # Создаем путь к папке data_output с помощью функции get_root_path из модуля utils
+    res.to_csv(os.path.join(data_output_path, filename), header=False, index=False)  # Сохраняем результат в CSV-файл
 
-    bot_class = np.array(y).astype(float)
+    bot_class = np.array(y).astype(float)  # Преобразуем предсказанные значения в массив типа float
 
-    if type(loaded_model) == type(MODELS['dt']):
-        probs = loaded_model.predict_proba(X)     
+    if type(loaded_model) == type(MODELS['dt']):  # Проверяем, является ли загруженная модель моделью DecisionTreeClassifier
+        probs = loaded_model.predict_proba(X)  # Если да, получаем вероятности принадлежности классам с помощью метода predict_proba
     else: 
-        probs = loaded_model.predict_proba(X)[:,1]
-    
+        probs = loaded_model.predict_proba(X)[:, 1]  # Иначе получаем вероятности принадлежности к положительному классу
+
     print(bot_class)
     print(probs)
 
-    plt.figure(figsize=(15,7))
-    if 0 in bot_class: 
-        plt.hist(probs[bot_class==0], bins=50, label='Человек' , range=[0.0, 1.0])
-    if 1 in bot_class:
-        plt.hist(probs[bot_class==1], bins=50, label='Бот', alpha=0.7, color='r', range=[0.0, 1.0])
-    plt.xlabel('Уверенность модели', fontsize=25)
-    plt.ylabel('Количество', fontsize=25)
-    plt.legend(fontsize=15)
-    plt.tick_params(axis='both', labelsize=25, pad=5)
+    plt.figure(figsize=(15, 7))  # Создаем новую фигуру для построения графика
+    if 0 in bot_class:  # Если в предсказанных значениях есть 0
+        plt.hist(probs[bot_class == 0], bins=50, label='Человек', range=[0.0, 1.0])  # Строим гистограмму для вероятностей человека
+    if 1 in bot_class:  # Если в предсказанных значениях есть 1
+        plt.hist(probs[bot_class == 1], bins=50, label='Бот', alpha=0.7, color='r', range=[0.0, 1.0])  # Строим гистограмму для вероятностей бота
+    plt.xlabel('Уверенность модели', fontsize=25)  # Задаем подпись оси x
+    plt.ylabel('Количество', fontsize=25)  # Задаем подпись оси y
+    plt.legend(fontsize=15)  # Добавляем легенду
+    plt.tick_params(axis='both', labelsize=25, pad=5)  # Задаем параметры делений на осях
 
     filename = f'plot_{run_id}.png'
-    plot_path = os.path.join(get_root_path(), "static", "images")
-    plt.savefig(os.path.join(plot_path, filename), bbox_inches='tight')
+    plot_path = os.path.join(get_root_path(), "static", "images")  # Создаем путь к папке images внутри папки static с помощью функции get_root_path из модуля utils
+    plt.savefig(os.path.join(plot_path, filename), bbox_inches='tight')  # Сохраняем график в файл
 
 
 def train(run_id, model_type):
     print(f'DEBUG: training {run_id}')
-    df = db.get_user_data(run_id)
-    df = pd.DataFrame(df)
+    df = db.get_user_data(run_id)  # Получаем данные пользователя с помощью функции get_user_data из модуля db в пакете data_module
+    df = pd.DataFrame(df)  # Преобразуем полученные данные в объект DataFrame из модуля pandas и называем его df
 
-    Y = df.loc[:, 41]
-    X = df.loc[:, 1:40]
-    test_size = 0.33
-    seed = 7
+    Y = df.loc[:, 41]  # Выбираем столбец с индексом 41 (целевая переменная) из DataFrame df и присваиваем его переменной Y
+    X = df.loc[:, 1:40]  # Выбираем столбцы с индексами от 1 до 40 из DataFrame df и присваиваем их переменной X
+    test_size = 0.33  # Задаем размер тестовой выборки
+    seed = 7  # Задаем семя для генерации случайных чисел
 
-    print(X[X.applymap(lambda x: isinstance(x, str)).any(axis=1)])  # Найти строки, содержащие значения, которые не являются числами
+    print(X[X.applymap(lambda x: isinstance(x, str)).any(axis=1)])  # Выводим строки, содержащие значения, которые не являются числами
 
-    X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=test_size, random_state=seed)
-    # # Fit the model on training set
-    model = MODELS[model_type]
+    X_train, X_test, Y_train, Y_test = model_selection.train_test_split(X, Y, test_size=test_size, random_state=seed)  # Разделяем данные на обучающую и тестовую выборки
+    model = MODELS[model_type]  # Выбираем модель по заданному типу из словаря MODELS
     try:
-        model.fit(X_train, Y_train)
+        model.fit(X_train, Y_train)  # Обучаем модель на данных пользователей
     except Exception as e:
         return str('Загруженные данные не подходят для обучения!')
-    
-    # save the model to disk
+
     filename = f'model_{run_id}.sav'
-    model_path = os.path.join(get_root_path(), "models")
-    pickle.dump(model, open(os.path.join(model_path, filename), 'wb'))
-    result = model.score(X_test, Y_test)
+    model_path = os.path.join(get_root_path(), "models")  # Создаем путь к папке models с помощью функции get_root_path из модуля utils
+    pickle.dump(model, open(os.path.join(model_path, filename), 'wb'))  # Сохраняем модель в файл
+    result = model.score(X_test, Y_test)  # Оцениваем модель на тестовых данных
     print(f'DEBUG: score: {result}')
     print(f'DEBUG: saving {filename}')
 
