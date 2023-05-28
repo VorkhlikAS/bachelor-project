@@ -1,1 +1,3 @@
-./db
+./.settings.yaml
+__pycache__/
+*.pyc

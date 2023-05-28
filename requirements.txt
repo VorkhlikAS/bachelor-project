@@ -3,4 +3,6 @@ vk
 psycopg2
 pyyaml
 pandas
-sklearn
+scikit-learn
+matplotlib
+numpy
