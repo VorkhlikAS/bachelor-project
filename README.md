@@ -13,7 +13,7 @@
 dbname: "postgres"
 user: "bot_user"
 password: "bot_detector"
-host: "<Название контейнера с базой данных>"
+host: "db"
 token: "<Токен VKApi>"
 version: "<Версия>"
 fields:
