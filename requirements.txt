@@ -1,0 +1,6 @@
+flask
+vk
+psycopg2
+pyyaml
+pandas
+sklearn

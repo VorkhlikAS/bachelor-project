@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv='cache-control' content='no-cache'>
+    <meta http-equiv='expires' content='0'>
+    <meta http-equiv='pragma' content='no-cache'>
+    <title>CSV Upload</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  </head>
+  <body onload="loadPage('{{ initial_run_name }}')">
+    <div class="header-container">
+      <div class="col-md-1">
+        <div id="loader" class="lds-dual-ring"></div>
+      </div>
+      <div class="col-md-1">
+        <h1>Ботолов</h1>
+      </div>
+      <div class="col-md-2">
+        <p class="subtitle">Приложение для распознавания ботов в социальной сети ВКонтакте</p>
+      </div>
+    </div>
+    <div class="container">
+      <div class="col-md-3">
+        <h1 class="run-header">Расчеты</h1>
+          <hr>
+        <div class="create-run-container">
+          <div>
+            <label>
+              создать расчет
+            </label>
+          </div>
+          <form class="run-create" action="{{ url_for('create_run') }}" method="POST" enctype="multipart/form-data">
+              <input type="text" class="tbox" id="myInput" name="myInput" onkeyup="checkInput()" placeholder="Название">
+              <input type="submit" class="bn3637 bn38" id="myButton" name="myButton" value="Добавить расчет" disabled onClick="loader()">
+          </form>
+        </div>
+        <ul class="run-list">
+          {% for run in runs %}
+          <li id="run-link" class="run-link" data-run-id="{{ run[0] }}" data-run-status="{{ run[2] }}">{{ run[1] }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="col-md-9">
+        <div class="buttons-container">
+          <button class="bn3639 bn39" id="info-button">Информация</button>
+          <button class="bn3639 bn39" id="upload-button">Загрузить для обучения</button>
+          <button class="bn3639 bn39" id="create-model-button">Обучить</button>
+          <button class="bn3639 bn39" id="upload-test-button">Загрузить для расчета</button>
+          <hr>
+        </div>
+        <div class="header-upload">
+          <h1 id="header" run-name="default"></h1>
+        </div>
+        <div class="content-container upload-form-container" id="content-container">
+          <!-- default content here -->
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+  </body>
+</html>
